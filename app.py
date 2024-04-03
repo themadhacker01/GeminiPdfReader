@@ -43,3 +43,21 @@ def get_text_chunks(pdf_text):
     return text_chunks
 
 
+# Creating a vector store using FAISS
+def get_vector_store(text_chunks):
+    # Create embeddings using Google GenAI model
+    embeddings = GoogleGenerativeAIEmbeddings(model = 'models/embedding-001')
+
+    # Create a vector store using FAISS from the text chunks and embeddings
+    vector_store = FAISS.from_texts(text_chunks, embedding = embeddings)
+
+    # Save the vector store locally with the name faiss_index
+    vector_store.save_local('faiss_index')
+
+
+def main(file_path):
+    pdf_text = get_pdf_text(file_path)
+    text_chunks = get_text_chunks(pdf_text)
+    get_vector_store(text_chunks)
+
+main('assets/ReoDev_GTM_Guide.pdf')
