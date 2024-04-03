@@ -32,3 +32,14 @@ def get_pdf_text(file_path):
 
         # Return the concatenated text from all pdf pages
         return pdf_text
+
+
+# Splits the large document into smaller chunks using LangChain
+def get_text_chunks(pdf_text):
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size = 10000, chunk_overlap = 1000)
+    text_chunks = text_splitter.split_text(pdf_text)
+
+    # Returns the text chunks from the pdf
+    return text_chunks
+
+
