@@ -55,9 +55,65 @@ def get_vector_store(text_chunks):
     vector_store.save_local('faiss_index')
 
 
+# Develop a question-answer chain
+def get_conversational_chain():
+    # Define a prompt template for asking qns based on a given context
+    prompt_template = '''
+    Answer the question as detailed as possible from the provided context, make sure to provide all the details
+    If the answer is not in the provided context, "Answer is not available in the context"
+    No matter what, do not provide the wrong answer
+    Context:\n{context}\n
+    Question:\n{question}\n
+
+    Answer:
+    '''
+
+    # Initialise a ChatGoogleGenerateAI model for conversational AI
+    model = ChatGoogleGenerativeAI(model = 'gemini-pro', temperature = 0.3)
+
+    # Create a prompt template with input variables context, question
+    prompt = PromptTemplate(
+        template = prompt_template,
+        input_variables = ['context', 'question']
+    )
+
+    # Load a question-answering chain with the model, prompt
+    chain = load_qa_chain(model, chain_type = 'stuff', prompt = prompt)
+
+    return chain
+
+
+# Take user input
+def user_input(user_question):
+    # Create embedding for the user question using a Google GenAI model
+    embeddings = GoogleGenerativeAIEmbeddings(model = 'models/embedding-001')
+
+    # Load a FAISS vector database from a local file
+    new_db = FAISS.load_local('faiss_index', embeddings)
+
+    # Perform similarity search in the vector database based on the user qn
+    docs = new_db.similarity_search(user_question)
+
+    # Obtain a conversational question-answering chain
+    chain = get_conversational_chain()
+
+    # Use the chain to get a response for the user question and documents
+    response = chain(
+        {
+            'input_documents': docs,
+            'question': user_question
+        },
+        return_only_outputs = True
+    )
+
+    # Print the response to the console
+    print(response)
+
+    # Display the response in a Streamlit app
+    st.write('Reply : ', response['output_text'])
+
+
 def main(file_path):
     pdf_text = get_pdf_text(file_path)
     text_chunks = get_text_chunks(pdf_text)
     get_vector_store(text_chunks)
-
-main('assets/ReoDev_GTM_Guide.pdf')
