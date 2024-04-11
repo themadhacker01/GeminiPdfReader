@@ -89,7 +89,8 @@ def user_input(user_question):
     embeddings = GoogleGenerativeAIEmbeddings(model = 'models/embedding-001')
 
     # Load a FAISS vector database from a local file
-    new_db = FAISS.load_local('faiss_index', embeddings)
+    # The key allow_dangerous_deserialization = True is a security risk
+    new_db = FAISS.load_local('faiss_index', embeddings, allow_dangerous_deserialization = True)
 
     # Perform similarity search in the vector database based on the user qn
     docs = new_db.similarity_search(user_question)
@@ -103,17 +104,30 @@ def user_input(user_question):
             'input_documents': docs,
             'question': user_question
         },
-        return_only_outputs = True
+        # return_only_outputs = True
     )
-
-    # Print the response to the console
-    print(response)
 
     # Display the response in a Streamlit app
     st.write('Reply : ', response['output_text'])
 
 
+# Main function of the application that calls all other functions
 def main(file_path):
-    pdf_text = get_pdf_text(file_path)
-    text_chunks = get_text_chunks(pdf_text)
-    get_vector_store(text_chunks)
+    st.set_page_config('Chat PDF')
+    st.header('Chat with PDF using Gemini')
+
+    user_question = st.text_input('Ask a question from the PDF files')
+
+    if user_question:
+        user_input(user_question)
+    
+    with st.sidebar:
+        st.title('Status : ')
+        pdf_text = get_pdf_text(file_path)
+        text_chunks = get_text_chunks(pdf_text)
+        get_vector_store(text_chunks)
+        st.success('Done')
+
+
+if __name__ == '__main__':
+    main('assets/sample_file.pdf')
